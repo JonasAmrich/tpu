@@ -23,7 +23,7 @@ from dataloader import retinanet_parser
 
 def parser_generator(params, mode):
   """Generator function for various dataset parser."""
-  if params.architecture.parser == 'retinanet_parser':
+  if params.architecture.parser in ('retinanet_parser', 'retinanet_oid_parser'):
     anchor_params = params.anchor
     parser_params = params.retinanet_parser
     parser_fn = retinanet_parser.Parser(
@@ -46,5 +46,9 @@ def parser_generator(params, mode):
         mode=mode)
   else:
     raise ValueError('Parser %s is not supported.' % params.architecture.parser)
+
+  if params.architecture.parser == 'retinanet_oid_parser':
+    from object_detection.data_decoders.tf_example_decoder import TfExampleDecoder as OIDTfExampleDecoder
+    parser_fn._example_decoder = OIDTfExampleDecoder()
 
   return parser_fn
