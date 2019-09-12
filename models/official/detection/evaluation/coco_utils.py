@@ -308,7 +308,10 @@ def convert_groundtruths_to_coco_dataset(groundtruths, label_map=None):
         ann = {}
         ann['image_id'] = int(groundtruths['source_id'][i][j])
         if 'is_crowds' in groundtruths:
-          ann['iscrowd'] = int(groundtruths['is_crowds'][i][j, k])
+          try:
+            ann['iscrowd'] = int(groundtruths['is_crowds'][i][j, k])
+          except IndexError:
+            ann['iscrowd'] = 0
         else:
           ann['iscrowd'] = 0
         ann['category_id'] = int(groundtruths['classes'][i][j, k])
@@ -319,7 +322,12 @@ def convert_groundtruths_to_coco_dataset(groundtruths, label_map=None):
             float(boxes[j, k, 3] - boxes[j, k, 1]),
             float(boxes[j, k, 2] - boxes[j, k, 0])]
         if 'areas' in groundtruths:
-          ann['area'] = float(groundtruths['areas'][i][j, k])
+          try:
+            ann['area'] = float(groundtruths['areas'][i][j, k])
+          except IndexError:
+            ann['area'] = float(
+              (boxes[j, k, 3] - boxes[j, k, 1]) *
+              (boxes[j, k, 2] - boxes[j, k, 0]))
         else:
           ann['area'] = float(
               (boxes[j, k, 3] - boxes[j, k, 1]) *
@@ -384,8 +392,11 @@ class COCOGroundtruthGenerator(object):
         masks: a string tensor of shape [K], containing the bytes of the png
           mask of each instance.
     """
-    decoder = tf_example_decoder.TfExampleDecoder(
-        include_mask=self._include_mask)
+
+    from object_detection.data_decoders.tf_example_decoder import TfExampleDecoder as OIDTfExampleDecoder
+    decoder = OIDTfExampleDecoder()
+    # decoder = tf_example_decoder.TfExampleDecoder(include_mask=self._include_mask)
+
     decoded_tensors = decoder.decode(example)
 
     image = decoded_tensors['image']
@@ -393,10 +404,9 @@ class COCOGroundtruthGenerator(object):
     boxes = box_utils.denormalize_boxes(
         decoded_tensors['groundtruth_boxes'], image_size)
     groundtruths = {
-        'source_id': tf.string_to_number(
-            decoded_tensors['source_id'], out_type=tf.int64),
-        'height': decoded_tensors['height'],
-        'width': decoded_tensors['width'],
+        'source_id': tf.strings.to_hash_bucket(decoded_tensors['source_id'], num_buckets=1000000000),
+        'height': decoded_tensors['original_image_spatial_shape'][0],
+        'width': decoded_tensors['original_image_spatial_shape'][1],
         'num_detections': tf.shape(decoded_tensors['groundtruth_classes'])[0],
         'boxes': boxes,
         'classes': decoded_tensors['groundtruth_classes'],
