@@ -240,11 +240,13 @@ def serving_model_graph_builder(output_image_info,
         params.anchor.anchor_size, (height, width))
 
     model_fn = factory.model_generator(params)
+    image_info = features['image_info'] if 'image_info' in features else features['labels']['image_info']
+
     model_outputs = model_fn.build_outputs(
         features['images'],
         labels={
             'anchor_boxes': input_anchor.multilevel_boxes,
-            'image_info': features['image_info'],
+            'image_info': image_info,
         },
         mode=mode_keys.PREDICT)
 
@@ -254,13 +256,13 @@ def serving_model_graph_builder(output_image_info,
 
     if output_image_info:
       model_outputs.update({
-          'image_info': features['image_info'],
+          'image_info': image_info,
       })
 
     if output_normalized_coordinates:
       model_outputs['detection_boxes'] = box_utils.normalize_boxes(
           model_outputs['detection_boxes'],
-          features['image_info'][:, 1:2, :])
+          image_info[:, 1:2, :])
 
     return model_outputs
 
