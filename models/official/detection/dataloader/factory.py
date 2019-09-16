@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import tensorflow as tf
 from dataloader import retinanet_parser
 
 
@@ -48,7 +49,15 @@ def parser_generator(params, mode):
     raise ValueError('Parser %s is not supported.' % params.architecture.parser)
 
   if params.architecture.parser == 'retinanet_oid_parser':
-    from object_detection.data_decoders.tf_example_decoder import TfExampleDecoder as OIDTfExampleDecoder
-    parser_fn._example_decoder = OIDTfExampleDecoder()
+    def lazy_decoder(self):
+      if self._example_decoder_ is None:
+        from object_detection.data_decoders.tf_example_decoder import TfExampleDecoder as OIDTfExampleDecoder
+        label_map = params.retinanet_parser.label_map_proto
+        if label_map:
+          print('Using label map {}'.format(label_map))
+        self._example_decoder_ = OIDTfExampleDecoder(label_map_proto_file=label_map)
+      return self._example_decoder_
+
+    parser_fn._lazy_decoder = lazy_decoder
 
   return parser_fn

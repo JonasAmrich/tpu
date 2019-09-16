@@ -49,6 +49,8 @@ class InputFn(object):
     if self._is_training:
       dataset = dataset.shuffle(64)
 
+    print('>>>>', self._parser_fn._example_decoder)
+
     # Parses the fetched records to input tensors for model function.
     dataset = dataset.map(self._parser_fn, num_parallel_calls=64)
     dataset = dataset.prefetch(tf.contrib.data.AUTOTUNE)

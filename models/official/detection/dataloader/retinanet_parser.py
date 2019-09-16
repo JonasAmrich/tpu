@@ -119,8 +119,7 @@ class Parser(object):
     self._skip_crowd_during_training = skip_crowd_during_training
     self._is_training = (mode == ModeKeys.TRAIN)
 
-    self._example_decoder = tf_example_decoder.TfExampleDecoder(
-        include_mask=False)
+    self._example_decoder_ = None
 
     # Anchor.
     self._output_size = output_size
@@ -153,6 +152,15 @@ class Parser(object):
       self._parse_fn = self._parse_predict_data
     else:
       raise ValueError('mode is not defined.')
+
+  def _lazy_decoder(self):
+    if self._example_decoder_ is None:
+      self._example_decoder_ = tf_example_decoder.TfExampleDecoder(include_mask=False)
+    return self._example_decoder_
+
+  @property
+  def _example_decoder(self):
+    return self._lazy_decoder(self)
 
   def __call__(self, value):
     """Parses data to an image and associated training labels.

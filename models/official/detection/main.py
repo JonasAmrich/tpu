@@ -164,6 +164,7 @@ def main(argv):
       tf.logging.info('Start training cycle %d.' % cycle)
       current_cycle_last_train_step = ((cycle + 1)
                                        * params.eval.num_steps_per_eval)
+
       executor.train(train_input_fn, current_cycle_last_train_step)
       executor.evaluate(
           eval_input_fn,

@@ -96,6 +96,7 @@ RETINANET_CFG = {
         'autoaugment_policy_name': 'v0',
         'skip_crowd_during_training': True,
         'max_num_instances': 100,
+        'label_map_proto': None,
     },
     'resnet': {
         'resnet_depth': 50,
