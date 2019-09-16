@@ -43,7 +43,7 @@ class InputFn(object):
     dataset = dataset.apply(
         tf.data.experimental.parallel_interleave(
             lambda file_name: self._dataset_fn(file_name).prefetch(1),
-            cycle_length=32,
+            cycle_length=32 if self._is_training else 1,
             sloppy=self._is_training))
 
     if self._is_training:
